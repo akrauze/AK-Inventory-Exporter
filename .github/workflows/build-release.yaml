@@ -1,0 +1,37 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 0.*
+      - 1.*
+
+jobs:
+  build-gradle-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v4
+      - name: Creating Zip
+        run: mkdir AKInventoryExporter && cp AKInventoryExporter.* AKInventoryExporter && zip -r AKInventoryExporter-${{ github.ref_name  }}.zip AKInventoryExporter
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref_name  }}
+          draft: false
+          prerelease: true
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: AKInventoryExporter-${{ github.ref_name  }}.zip
+          asset_name: AKInventoryExporter-${{ github.ref_name  }}.zip
+          asset_content_type: application/octet-stream
